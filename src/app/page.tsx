@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Shield, Sparkles } from "lucide-react";
 import { SensorCards } from "@/components/dashboard/sensor-cards";
 import { SensorChart } from "@/components/dashboard/sensor-chart";
+import { SensorIndividualCharts } from "@/components/dashboard/sensor-individual-charts";
 import { NotificationsPanel } from "@/components/dashboard/notifications-panel";
 import { useAuth } from "@/context/auth-context";
 import { useLocale } from "@/context/locale-context";
@@ -61,7 +62,7 @@ export default function Home() {
     }
   };
 
-  const sensorLabels = {
+  const sensorLabels: Record<SensorKey, string> = {
     temperature: t("temperature"),
     humidity: t("humidity"),
     rain: t("rain"),
@@ -225,6 +226,17 @@ export default function Home() {
                       {localized.statsHeadline}
                     </h3>
                     <SensorChart data={chartData} labels={sensorLabels} />
+                  </article>
+
+                  <article className="space-y-3 rounded-3xl border border-white/20 bg-white/10 p-5 shadow-xl backdrop-blur-md">
+                    <h3 className="text-lg font-bold text-white">
+                      {t("individualGraphs")}
+                    </h3>
+                    <SensorIndividualCharts
+                      data={chartData}
+                      labels={sensorLabels}
+                      units={sensorUnits}
+                    />
                   </article>
 
                   <article className="grid gap-3 md:grid-cols-5">

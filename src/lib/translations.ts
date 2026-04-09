@@ -65,6 +65,7 @@ export const translations = {
     pageFooter: "Built with Next.js + Firebase + Arduino local API",
     openAdmin: "Open admin",
     openDashboard: "Open dashboard",
+    individualGraphs: "Individual sensor graphs",
   },
   fr: {
     appTitle: "AgriPulse Controle",
@@ -132,6 +133,7 @@ export const translations = {
     pageFooter: "Construit avec Next.js + Firebase + API Arduino locale",
     openAdmin: "Ouvrir admin",
     openDashboard: "Ouvrir tableau",
+    individualGraphs: "Graphiques individuels des capteurs",
   },
 } as const;
 
