@@ -1,8 +1,14 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import type { SensorReading } from "@/lib/types";
 
+const INJECTED_READING_TTL_MS = 10 * 60 * 1000;
+
+let latestInjectedReading: SensorReading | null = null;
+let latestInjectedAtMs = 0;
+
 const parseNumber = (value: unknown, fallback = 0): number => {
-  const num = typeof value === "string" ? Number(value) : Number(value ?? fallback);
+  const num =
+    typeof value === "string" ? Number(value) : Number(value ?? fallback);
   return Number.isFinite(num) ? num : fallback;
 };
 
@@ -19,8 +25,24 @@ const normalizeReading = (raw: Record<string, unknown>): SensorReading => {
   };
 };
 
+const getFreshInjectedReading = (): SensorReading | null => {
+  if (!latestInjectedReading) return null;
+  if (Date.now() - latestInjectedAtMs > INJECTED_READING_TTL_MS) {
+    latestInjectedReading = null;
+    latestInjectedAtMs = 0;
+    return null;
+  }
+  return latestInjectedReading;
+};
+
 export async function GET() {
-  const endpoint = process.env.ARDUINO_API_URL ?? process.env.NEXT_PUBLIC_ARDUINO_API_URL;
+  const injected = getFreshInjectedReading();
+  if (injected) {
+    return NextResponse.json(injected);
+  }
+
+  const endpoint =
+    process.env.ARDUINO_API_URL ?? process.env.NEXT_PUBLIC_ARDUINO_API_URL;
 
   if (!endpoint) {
     return NextResponse.json(
@@ -78,3 +100,35 @@ export async function GET() {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const payload = (await request.json()) as unknown;
+    if (!payload || typeof payload !== "object") {
+      return NextResponse.json(
+        { error: "Invalid JSON body." },
+        { status: 400 },
+      );
+    }
+
+    latestInjectedReading = normalizeReading(payload as Record<string, unknown>);
+    latestInjectedAtMs = Date.now();
+
+    return NextResponse.json(
+      {
+        ok: true,
+        message:
+          "Fake sensor data received. GET /api/sensors will serve this reading for the next 10 minutes.",
+        reading: latestInjectedReading,
+      },
+      { status: 201 },
+    );
+  } catch {
+    return NextResponse.json(
+      {
+        error:
+          "Invalid JSON. Send: temperature, humidity, rain, light, pressure, optional timestamp.",
+      },
+      { status: 400 },
+    );
+  }
+}
